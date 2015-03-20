@@ -4,7 +4,7 @@ import csv
 class Data(object):
     def __init__(self,chr):
         self._chr = chr # chromosome number
-        self._filename = "intersected_final_chr" + chr + "_cutoff_20_"
+        self._filename = "intersected_final_chr" + str(chr) + "_cutoff_20_"
         self.data_map = {} # Dictionary for all the data
 
     def _read_data(self,filename):
