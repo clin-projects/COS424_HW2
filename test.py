@@ -19,7 +19,7 @@ print '\n'
 print 'Loading time: ' + str(hour) + "h " + str(minute) + "m " + str(second) + "s "
 
 start_time = time.time()
-chr1.data_extract(strand_binary=True, pos_normalize=True)
+chr1.data_extract(strand_binary=True, pos_normalize=False)
 read_time = time.time() - start_time
 hour, minute, second = pr.time_process(read_time)
 print '\n'
@@ -70,6 +70,22 @@ var = np.var(chr1.test_beta[np.array(test_not_nan)])
 print '\n'
 print "Prediction Error Square:", err
 print "Error percentage:", err/var
+
+pos_count = 0
+strand_count = 0
+chip_count = 0
+
+for n in range(len(chr1.train_start)):
+    if chr1.train_start[n] != chr1.sample_start[n]:
+        pos_count += 1
+    if chr1.train_strand[n] != chr1.train_strand[n]:
+        strand_count += 1
+    if chr1.train_chip[n] != chr1.train_chip[n]:
+        chip_count += 1
+
+print "Pos:", pos_count
+print "Strand:", strand_count
+print "Chip:", chip_count
 
 
 
