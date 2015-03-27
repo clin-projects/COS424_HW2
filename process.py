@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+from sklearn import preprocessing
 
 class Data(object):
     def __init__(self,chr):
@@ -38,23 +39,39 @@ class Data(object):
             self._data_detail("sample")
             self._data_detail("test")
 
-    def data_extract(self, strand_binary = False, strand_list = [0,1]):
+    def data_extract(self, strand_binary = False, strand_list = (0,1), pos_normalize = False, pos_range = (0,1)):
         """
         Extract starting position, ending position, strand, betas and chip numbers from
         the data file, converting to appropriate data types.
         :param strand_binary: Whether convert strand to binary types
         :param strand_list: Give a list of two numbers corresponding to - and +
+        :param pos_normalize: Whether normalize the position
+        :param pos_range: The range of normalized positions
         :return: None
         """
         # Extract starting position in integers
-        self.train_start = self.train[:,1].astype(int)
-        self.sample_start = self.sample[:,1].astype(int)
-        self.test_start = self.test[:,1].astype(int)
+        self.train_start = self.train[:,1].astype(float)
+        self.sample_start = self.sample[:,1].astype(float)
+        self.test_start = self.test[:,1].astype(float)
+
+        # Normalize starting position
+        if pos_normalize:
+            scaler = preprocessing.MinMaxScaler(feature_range=pos_range, copy=False)
+            scaler.fit_transform(self.train_start)
+            scaler.fit_transform(self.sample_start)
+            scaler.fit_transform(self.test_start)
 
         # Extract ending position in integers
-        self.train_end = self.train[:,2].astype(int)
-        self.sample_end = self.sample[:,2].astype(int)
-        self.test_end = self.test[:,2].astype(int)
+        self.train_end = self.train[:,2].astype(float)
+        self.sample_end = self.sample[:,2].astype(float)
+        self.test_end = self.test[:,2].astype(float)
+
+        # Normalize starting position
+        if pos_normalize:
+            scaler = preprocessing.MinMaxScaler(feature_range=pos_range, copy=False)
+            scaler.fit_transform(self.train_end)
+            scaler.fit_transform(self.sample_end)
+            scaler.fit_transform(self.test_end)
 
         # Extract strand information
         self.train_strand = self.train[:,3]
@@ -69,6 +86,10 @@ class Data(object):
             self.test_strand = [strand[n] for n in self.test_strand]
             self.sample_strand = [strand[n] for n in self.sample_strand]
 
+        self.train_strand = np.array(self.train_strand)
+        self.sample_strand = np.array(self.sample_strand)
+        self.test_strand = np.array(self.test_strand)
+
         # Extract all betas
         self.train_beta = self.train[:,4:36].astype(float)
         self.sample_beta = self.sample[:,4].astype(float)
@@ -78,6 +99,19 @@ class Data(object):
         self.train_chip = self.train[:,-1].astype(int)
         self.sample_chip = self.sample[:,-1].astype(int)
         self.test_chip = self.test[:,-1].astype(int)
+
+        # Extract the indices of missing values in sample beta
+        self.sample_nan = []
+        self.sample_not_nan = []
+        for n in range(len(self.sample_beta)):
+            if np.isnan(self.sample_beta[n]):
+                self.sample_nan.append(n)
+            else:
+                self.sample_not_nan.append(n)
+
+        self.sample_nan = np.array(self.sample_nan)
+        self.sample_not_nan = np.array(self.sample_not_nan)
+
 
     def _data_detail(self, label):
         """
