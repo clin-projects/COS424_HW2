@@ -3,7 +3,7 @@ __author__ = 'liangshengzhang'
 import process as pr
 import numpy as np
 import time
-from math import log
+from math import log,exp
 
 start_time = time.time()
 
@@ -19,7 +19,7 @@ print '\n'
 print 'Loading time: ' + str(hour) + "h " + str(minute) + "m " + str(second) + "s "
 
 start_time = time.time()
-chr1.data_extract(strand_binary=True, pos_normalize=False)
+chr1.data_extract(strand_binary=True, pos_normalize=True)
 read_time = time.time() - start_time
 hour, minute, second = pr.time_process(read_time)
 print '\n'
@@ -60,7 +60,7 @@ err = 0
 test_not_nan = []
 for n in range(len(predict)):
     if not np.isnan(chr1.test_beta[chr1.sample_nan[n]]):
-        err += (predict[n] - chr1.test_beta[chr1.sample_nan[n]])**2
+        err += ((1.0/(1.0+exp(predict[n]))) - chr1.test_beta[chr1.sample_nan[n]])**2
         test_not_nan.append(chr1.sample_nan[n])
 err = err / len(test_not_nan)
 
