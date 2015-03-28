@@ -111,8 +111,8 @@ class Data(object):
                     nnan_ind.append(n)
             return np.array(nan_ind), np.array(nnan_ind)
 
-        self.sample_nan, self.sample_non_nan = findnan(self.sample_beta)
-        self.test_nan, self.test_non_nan = findnan(self.test_beta)
+        self.sample_nan, self.sample_not_nan = findnan(self.sample_beta)
+        self.test_nan, self.test_not_nan = findnan(self.test_beta)
 
     def _data_detail(self, label):
         """
