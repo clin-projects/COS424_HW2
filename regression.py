@@ -31,20 +31,23 @@ print 'Processing time: ' + str(hour) + "h " + str(minute) + "m " + str(second) 
 
 start_time = time.time()
 from sklearn import linear_model
-clf = linear_model.LinearRegression()
 
+predict = []
 train_X = np.transpose(chr1.train_beta[chr1.sample_not_nan,:])
+sample_X = chr1.sample_beta[chr1.sample_not_nan]
+clf = linear_model.LinearRegression()
+for n in chr1.sample_nan:
+    if n % 1000 == 0:
+        print n
+    clf.fit(train_X, chr1.train_beta[n,:])
+    predict.append(clf.predict(sample_X))
 
+predict_time = time.time() - start_time
+hour, minute, second = pr.time_process(predict_time)
 print '\n'
-clf.fit(train_X, np.transpose(chr1.train_beta[chr1.sample_nan,:]))
+print 'Fitting and Predicting time: ' + str(hour) + "h " + str(minute) + "m " + str(second) + "s "
 
-sample_X = np.transpose(chr1.sample_beta[chr1.sample_not_nan,:])
 
-predict = clf.predict(sample_X)
-
-print np.shape(predict)
-
-"""
 # Normalized square error for prediction
 err = 0
 test_not_nan = []
@@ -60,4 +63,4 @@ var = np.var(chr1.test_beta[np.array(test_not_nan)])
 print '\n'
 print "Prediction Error Square:", err
 print "Error percentage:", err/var
-"""
+
