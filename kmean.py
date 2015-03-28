@@ -24,7 +24,6 @@ print 'Loading time: ' + str(hour) + "h " + str(minute) + "m " + str(second) + "
 start_time = time.time()
 chr1.data_extract(strand_binary=True, pos_normalize=True)
 
-start_time = time.time()
 from sklearn import preprocessing
 imputer = preprocessing.Imputer(copy=False)
 imputer.fit_transform(chr1.train_beta)
