@@ -101,17 +101,18 @@ class Data(object):
         self.test_chip = self.test[:,-1].astype(int)
 
         # Extract the indices of missing values in sample beta
-        self.sample_nan = []
-        self.sample_not_nan = []
-        for n in range(len(self.sample_beta)):
-            if np.isnan(self.sample_beta[n]):
-                self.sample_nan.append(n)
-            else:
-                self.sample_not_nan.append(n)
+        def findnan(beta_array):
+            nan_ind = []
+            nnan_ind = []
+            for n in range(len(beta_array)):
+                if np.isnan(beta_array[n]):
+                    nan_ind.append(n)
+                else:
+                    nnan_ind.append(n)
+            return np.array(nan_ind), np.array(nnan_ind)
 
-        self.sample_nan = np.array(self.sample_nan)
-        self.sample_not_nan = np.array(self.sample_not_nan)
-
+        self.sample_nan, self.sample_non_nan = findnan(self.sample_beta)
+        self.test_nan, self.test_non_nan = findnan(self.test_beta)
 
     def _data_detail(self, label):
         """
