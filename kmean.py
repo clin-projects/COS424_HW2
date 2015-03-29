@@ -61,31 +61,40 @@ from sklearn import linear_model
 
 predict = []
 clf = linear_model.LinearRegression()
-for n in chr1.sample_nan:
-    if n % 10000 == 0:
-        print n
-    clf.fit(train_X, chr1.train_beta[n,:])
-    predict.append(clf.predict(sample_X))
+score = []
+if cluster_num < 20:
+    coef = []
+    intercept = []
+else:
+    coef = None
+    intercept = None
+chr1.regression(clf, train_X, sample_X, predict, score, intercept=intercept, coef=coef)
 
 predict_time = time.time() - start_time
 hour, minute, second = pr.time_process(predict_time)
 print '\n'
 print 'Fitting and Predicting time: ' + str(hour) + "h " + str(minute) + "m " + str(second) + "s "
 
-
+start_time = time.time()
 # Normalized square error for prediction
-err = 0
 test_not_nan = []
-for n in range(len(predict)):
-    if not np.isnan(chr1.test_beta[chr1.sample_nan[n]]):
-        err += (predict[n] - chr1.test_beta[chr1.sample_nan[n]])**2
-        test_not_nan.append(chr1.sample_nan[n])
-err = err / len(test_not_nan)
-
-# Varaince of the test data used for comparison
-var = np.var(chr1.test_beta[np.array(test_not_nan)])
+predict_not_nan = []
+true_val = []
+err, var= chr1.error_metric(predict, test_not_nan, predict_not_nan, true_val)
 
 print '\n'
+print "Number of points:", len(test_not_nan)
+print "Var:", var
 print "Prediction Error Square:", err
 print "Error percentage:", err/var
+
+# Only print out values which have true values
+filename = "kmean_" + str(cluster_num) + ".txt"
+
+chr1.output(filename, predict_not_nan, predict, true_val, score = score, intercept=intercept, coef=coef)
+
+output_time = time.time() - start_time
+hour, minute, second = pr.time_process(output_time)
+print '\n'
+print 'Output time: ' + str(hour) + "h " + str(minute) + "m " + str(second) + "s "
 
