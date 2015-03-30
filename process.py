@@ -111,8 +111,8 @@ class Data(object):
                     nnan_ind.append(n)
             return np.array(nan_ind), np.array(nnan_ind)
 
-        self.sample_nan, self.sample_non_nan = findnan(self.sample_beta)
-        self.test_nan, self.test_non_nan = findnan(self.test_beta)
+        self.sample_nan, self.sample_not_nan = findnan(self.sample_beta)
+        self.test_nan, self.test_not_nan = findnan(self.test_beta)
 
     def _data_detail(self, label):
         """
@@ -124,6 +124,67 @@ class Data(object):
         s = self.data_map[label]
         print "Number of rows: " + str(len(s))
         print "Number of cols: " + str(len(s[0])) + "\n"
+
+    def regression(self, clf, train_X, sample_X, predict, score, alpha = None, intercept = None, coef = None,
+                   step = False, step_num = 10000):
+        for n in self.sample_nan:
+            if step:
+                if n % step_num == 0:
+                    print n
+            clf.fit(train_X, self.train_beta[n,:])
+            predict.append(clf.predict(sample_X))
+            score.append(clf.score(train_X, self.train_beta[n,:]))
+            if alpha is not None:
+                alpha.append(clf.alpha_)
+            if intercept is not None:
+                intercept.append(clf.intercept_)
+            if coef is not None:
+                coef.append(clf.coef_)
+
+    def error_metric(self, predict, test_not_nan, predict_not_nan, true_val):
+        err = 0
+        for n in range(len(predict)):
+            if not np.isnan(self.test_beta[self.sample_nan[n]]):
+                err += (predict[n] - self.test_beta[self.sample_nan[n]])**2
+                true_val.append(self.test_beta[self.sample_nan[n]])
+                test_not_nan.append(self.sample_nan[n])
+                predict_not_nan.append(n)
+        err = err / len(test_not_nan)
+        # Variance of the test data used for comparison
+        var = np.var(self.test_beta[np.array(test_not_nan)])
+
+        return err, var
+
+    def output(self, filename, predict_not_nan, predict, true_val, score = None, alpha = None, intercept = None,
+               coef = None):
+        f = open(filename,'w')
+
+        f.write("prediction    true_val")
+        if score is not None:
+            f.write("   score")
+        if alpha is not None:
+            f.write("   alpha")
+        if intercept is not None:
+            f.write("   intercept")
+        if coef is not None:
+            for n in range(len(coef[0])):
+                f.write("   coefficient_" + str(n+1))
+        f.write('\n')
+
+        for n in range(len(predict_not_nan)):
+            pos = predict_not_nan[n]
+            f.write(str(predict[pos]) + "    " + str(true_val[n]))
+            if score is not None:
+                f.write("   " + str(score[pos]))
+            if alpha is not None:
+                f.write("   " + str(alpha[pos]))
+            if intercept is not None:
+                f.write("   " + str(intercept[pos]))
+            if coef is not None:
+                for i in range(len(coef[pos])):
+                    f.write("   " + str(coef[pos][i]))
+            f.write('\n')
+        f.close()
 
 
 def time_process(elapse_time):
