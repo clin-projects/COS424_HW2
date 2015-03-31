@@ -31,14 +31,15 @@ print 'Processing time: ' + str(hour) + "h " + str(minute) + "m " + str(second) 
 
 start_time = time.time()
 from sklearn import linear_model
-
+chr1.sample_nan = chr1.sample_nan[-100:]
 predict = []
 score = []
+coef = []
 train_X = np.transpose(chr1.train_beta[chr1.sample_not_nan,:])
 sample_X = chr1.sample_beta[chr1.sample_not_nan]
 clf = linear_model.LinearRegression()
 
-chr1.regression(clf, train_X, sample_X, predict, score)
+chr1.regression(clf, train_X, sample_X, predict, score, coef=coef)
 
 predict_time = time.time() - start_time
 hour, minute, second = pr.time_process(predict_time)
@@ -62,10 +63,23 @@ print "Error percentage:", err/var
 # Only print out values which have true values
 filename = "regression.txt"
 
-chr1.output(filename, predict_not_nan, predict, true_val, score = score)
+#chr1.output(filename, predict_not_nan, predict, true_val, score = score)
+
+f = open("regression_coef.txt",'w')
+f.write("mean\tvar")
+coef = np.array(coef)
+print coef.shape
+mean = np.mean(coef,axis=0)
+print mean.shape
+var = np.var(coef,axis=0)
+print var.shape
+for n in range(len(coef[0])):
+    f.write(str(mean[n])+'\t'+str(var[n])+'\n')
 
 output_time = time.time() - start_time
 hour, minute, second = pr.time_process(output_time)
 print '\n'
 print 'Output time: ' + str(hour) + "h " + str(minute) + "m " + str(second) + "s "
+
+
 
