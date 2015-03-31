@@ -1,3 +1,4 @@
-*.pdf
+assignment*.pdf
 *.bed
-readME*
+*.txt
+*.out
