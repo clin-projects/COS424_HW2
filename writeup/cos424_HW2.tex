@@ -1,0 +1,90 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{cos424,times}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{multirow}
+
+\bibliographystyle{plos2009}
+
+
+\title{meth}
+
+
+\author{
+Chaney C. Lin\\
+Department of Physics\\
+Princeton University\\
+\texttt{chaneyl@princeton.edu} \\
+\And
+Liangsheng Zhang\\
+Department of Physics\\
+Princeton University\\
+\texttt{liangshe@princeton.edu} \\
+}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\end{abstract}
+\section{Introduction}
+
+External factors affect how genes are expressed. One such factor is DNA methylation, a biochemical process in which a methyl group (CH$_3$) attaches to a cytosine nucleotide, usually where a cytosine (C) neighbors a guanine (G) (such a neighboring pair of C and G is called a CpG site, or CG site).
+
+Just as our understanding of genetics develops with better statistics and more data, so it is with DNA methylation. However, assaying methylation levels across the full genome remains prohibitively expensive; more affordable partial assays are available, but for these, the difficulty is predicting the methylation levels of unmeasured sites, so-called imputing.
+
+This is what we aim to achieve in our project: a reliable model for imputing.
+
+\section{Data Description}
+
+The training data is a set of 3? whole genome bisulfite sequences, from et al Ziller 2013 ~\cite{ziller2013charting}. For each sequence $i$, we have the methylation levels $\beta_{i,d}$ at CpG sites, indexed by positions $d$, where $\beta \in [0,1]$ refers to the fraction of methylated reads from this sequence $i$ at $d$.
+
+The test data set is a partial assay [cite]
+
+In this report, we work only with the first chromosome.
+
+\section{Methods}
+
+\subsection{Data processing}
+
+The data set was downloaded on [] from Bianca Dumitrescu's COS424 directory. 
+
+\subsection{Classification models}
+
+\subsection{Evaluation}
+
+(questions in problem writeup)
+\begin{itemize}
+\item what features were most important for prediction? what do features tell us about problem
+\item were some reference samples more predictive of the held out sample than others?
+\item what did distribution of prediction errors look like? approximately gaussian and zero centered, or heavy tail, or what?
+\end{itemize}
+
+include specific examples of CpG sites or features that highlight behavior of the models
+
+provide analysis code
+
+\section{Results}
+
+\subsection{Computational speed}
+
+\subsection{Generalization error}
+
+
+\section{Discussion}
+
+
+
+\section{Conclusion}
+work with more chromosomes
+
+
+\bibliography{ref}
+
+\end{document}
