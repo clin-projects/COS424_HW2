@@ -37,19 +37,37 @@ Princeton University\\
 
 External factors affect how genes are expressed. One such factor is DNA methylation, a biochemical process in which a methyl group (CH$_3$) attaches to a cytosine nucleotide, usually where a cytosine (C) neighbors a guanine (G) (such a neighboring pair of C and G is called a CpG site, or CG site).
 
-Just as our understanding of genetics develops with better statistics and more data, so it is with DNA methylation. However, assaying methylation levels across the full genome remains prohibitively expensive; more affordable partial assays are available, but for these, the difficulty is predicting the methylation levels of unmeasured sites, so-called imputing.
+Just as our understanding of genetics develops with better statistics and more data, so it is with DNA methylation. However, assaying methylation levels across the full genome remains prohibitively expensive; more affordable partial assays are available, but for these, the difficulty is predicting the methylation levels (MLs) of unmeasured sites, so-called imputing.
 
 This is what we aim to achieve in our project: a reliable model for imputing.
 
 \section{Data Description}
 
-The training data is a set of 3? whole genome bisulfite sequences, from et al Ziller 2013 ~\cite{ziller2013charting}. For each sequence $i$, we have the methylation levels $\beta_{i,d}$ at CpG sites, indexed by positions $d$, where $\beta \in [0,1]$ refers to the fraction of methylated reads from this sequence $i$ at $d$.
+The training data is a set of 3? whole genome bisulfite sequences, from Ziller et al 2013 ~\cite{ziller2013charting}. For each sequence $i$, we have the MLs $\beta_{i,d}$ at CpG sites, indexed by positions $d$, where $\beta \in [0,1]$ refers to the fraction of methylated reads from this sequence $i$ at $d$. The test data set is a partial assay, also from Ziller et al 2013. The set of positions is the same for all reference sequences. Each reference sequence contains $N=?$ positions. The test sequence contains $M=?$ positions. We shall denote the test betas as $\beta_{0,d}$.
 
-The test data set is a partial assay [cite]
+Both training and test sequences contain unmeasured values ("NaN"). In the training set, we set a NaN value as the average of observed values at that position in the other reference sequences. The test set contains some observed MLs. We denote the set of their positions as $\Omega$. In most of our models, we use $\beta_{0,d}$ with $d \in \Omega$ as features.
 
 In this report, we work only with the first chromosome.
 
 \section{Methods}
+
+\begin{enumerate}
+
+\item \emph{Naive mean model}. This model predicts using the mean of the reference sequences:
+\[ \beta_{0,d} = \underset{i}{\text{avg}} \left\{ \beta_{i,d}\right\}\]
+Such a model works well if MLs for a given position are drawn from a normal distribution.
+\item \emph{Linear regression}. For this set of linear regression models, there are two steps. (i) For each unobserved value in the test set, with position $d$, we run a linear regression on the training set, using as features $\left\{ \beta_{i,x} \right\}_{x \in \Omega}$ to predict the value $\beta_{i,d}$. Note that we have $N$ data points. (ii) The resulting parameters $\left\{ a_x\right\}_{x \in \Omega}$ are used to predict $\beta_{0,d}$ by
+\[ \beta_{0,d} = \sum_{x \in \Omega} a_x \beta_{0,d}\]
+We specify below the variations of each submodel from the above.
+\begin{enumerate}
+\item \emph{Unregularized, logistic}. This model uses transformed target variables. Instead of predicting $\beta_{0,d}$ for $d \notin \Omega$, we predict the values
+\[ f(\beta) = \log \left(\beta^{-1} -1 \right)\]
+This is a nonlinear transformation, from the domain $[0,1]$ to $(-\infty,\infty)$. Steps (i) and (ii) are unchanged, though the inverse transformation is performed on the predicted values to return them to the domain $[0,1]$.
+\item \emph{LASSO}. This model includes another term in the optimization function. The usual linear regression (as was used above) seeks to minimize the sum of the squared errors. In LASSO, a penalty term is included 
+\item \emph{Ridge}.
+\end{enumerate}
+\item K mean
+\end{enumerate}
 
 \subsection{Data processing}
 
