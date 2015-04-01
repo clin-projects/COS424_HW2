@@ -5,6 +5,8 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{multirow}
+\usepackage{mathtools}
+
 
 \bibliographystyle{plos2009}
 
@@ -26,6 +28,8 @@ Princeton University\\
 
 \newcommand{\fix}{\marginpar{FIX}}
 \newcommand{\new}{\marginpar{NEW}}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+
 
 \begin{document}
 
@@ -37,45 +41,63 @@ Princeton University\\
 
 External factors affect how genes are expressed. One such factor is DNA methylation, a biochemical process in which a methyl group (CH$_3$) attaches to a cytosine nucleotide, usually where a cytosine (C) neighbors a guanine (G) (such a neighboring pair of C and G is called a CpG site, or CG site).
 
-Just as our understanding of genetics develops with better statistics and more data, so it is with DNA methylation. However, assaying methylation levels across the full genome remains prohibitively expensive; more affordable partial assays are available, but for these, the difficulty is predicting the methylation levels (MLs) of unmeasured sites, so-called imputing.
-
-This is what we aim to achieve in our project: a reliable model for imputing.
+Just as our understanding of genetics develops with better statistics and more data, so it is with DNA methylation. However, assaying methylation levels across the full genome remains prohibitively expensive; more affordable partial assays are available, but for these, the difficulty is predicting the methylation levels (MLs) of unmeasured sites, so-called imputing. This is what we aim to achieve in our project: a reliable model for imputing.
 
 \section{Data Description}
 
-The training data is a set of 3? whole genome bisulfite sequences, from Ziller et al 2013 ~\cite{ziller2013charting}. For each sequence $i$, we have the MLs $\beta_{i,d}$ at CpG sites, indexed by positions $d$, where $\beta \in [0,1]$ refers to the fraction of methylated reads from this sequence $i$ at $d$. The test data set is a partial assay, also from Ziller et al 2013. The set of positions is the same for all reference sequences. Each reference sequence contains $N=?$ positions. The test sequence contains $M=?$ positions. We shall denote the test betas as $\beta_{0,d}$.
+The training data is a set of 3? whole genome bisulfite sequences, from Ziller et al 2013 ~\cite{ziller2013charting}. For each sequence $i$, we have the MLs $\beta_{i,d}$ at CpG sites, indexed by positions $d$, where $\beta \in [0,1]$ refers to the fraction of methylated reads from this sequence $i$ at $d$. Though both starting and ending positions for each site were provided, the difference between them was constant, so their information is redundant. By position, we refer to the starting position.
 
-Both training and test sequences contain unmeasured values ("NaN"). In the training set, we set a NaN value as the average of observed values at that position in the other reference sequences. The test set contains some observed MLs. We denote the set of their positions as $\Omega$. In most of our models, we use $\beta_{0,d}$ with $d \in \Omega$ as features.
+The test data set is a partial assay, also from Ziller et al 2013 ~\cite{ziller2013charting}. The set of positions is the same for all reference sequences. Each reference sequence contains $N=?$ positions. The test sequence contains $M=?$ positions. We shall denote the test betas as $\beta_{0,d}$.
 
 In this report, we work only with the first chromosome.
 
 \section{Methods}
+(include summary here)
+
+\subsection{Data processing}
+
+The data set was downloaded on March 20, 2015 from Bianca Dumitrescu's COS424 directory on Princeton's Nobel cluster. Both training and test sequences contain sites with unmeasured MLs, labeled "NaN".
+
+The only general preprocessing done is imputing on the training set. In the training set, we have chosen to set a NaN value as the average of measured values at the same position, in the other reference sequences. 
+
+The test set contains some observed MLs. We denote the set of their positions as $\Omega$. We frequently use these observed values in our models.
+
+The only specific preprocessing done is in one model, where we study a nonlinear transformation of the response variables. This transformation $f(\beta): [0,1] \to (-\infty,\infty)$ is of the form
+\[ f(\beta) = \ln(\beta^{-1} - 1) \ .\]
+The inverse returns the predicted values to the domain $[0,1]$.
+
+\subsection{Prediction models}
+
+The models were applied using built-in functions of the scikit-learn Python library \cite{scikit-learn}. Default parametrizations were used, unless otherwise specified.
 
 \begin{enumerate}
 
 \item \emph{Naive mean model}. This model predicts using the mean of the reference sequences:
 \[ \beta_{0,d} = \underset{i}{\text{avg}} \left\{ \beta_{i,d}\right\}\]
-Such a model works well if MLs for a given position are drawn from a normal distribution.
-\item \emph{Linear regression}. For this set of linear regression models, there are two steps. (i) For each unobserved value in the test set, with position $d$, we run a linear regression on the training set, using as features $\left\{ \beta_{i,x} \right\}_{x \in \Omega}$ to predict the value $\beta_{i,d}$. Note that we have $N$ data points. (ii) The resulting parameters $\left\{ a_x\right\}_{x \in \Omega}$ are used to predict $\beta_{0,d}$ by
-\[ \beta_{0,d} = \sum_{x \in \Omega} a_x \beta_{0,d}\]
-We specify below the variations of each submodel from the above.
+Such a model would work well if for each position $d$, the MLs were drawn from a distribution $P_d$ symmetric about its mean.
+\item \emph{Linear regression models}. Most of our models are essentially linear regression. We have studied a nonlinear transformation of the data (logistic), as well as regularized models (LASSO and ridge).
+
+The models fall into two classes, which we refer to as Class 1 and Class 2. They differ in their choice of features. They are very different in spirit, with seemingly opposing assumptions and interpretation, but their results are qualitatively identical. We devote the bulk of our discussion in this report to unraveling the implications on the data.
+
+\begin{itemize}
+\item [Class 1.] For each position $d \notin \Omega$, a linear regression is performed, using as features $\left\{ \beta_{i,x} \right\}_{x \in \Omega}$ to predict the value $\beta_{i,d}$. Because $i$ runs from $1$ to $N$, there are $N$ data points (for each $d \notin \Omega)$. The resulting parameters $\left\{ a_x\right\}_{x \in \Omega}$ are used to predict $\beta_{0,d}$ by
+\begin{equation} \label{beta.sites}\beta_{0,d} = \sum_{x \in \Omega} a_x \beta_{0,d} \ .\end{equation}
+\item [Class 2.] One linear regression is performed, using as features $\left\{ \beta_{i,d} \right\}_{1\leq i \leq N}$ to predict the value $\beta_{0,d}$. Because every position $d \in \Omega$ provides one data point, the total number of data points is the size of $\Omega$. The resulting parameters $\left\{ a_{i}\right\}_{1\leq i \leq N}$ are used to predict $\beta_{0,d}$ by
+\begin{equation} \label{beta.samples} \beta_{0,d} = \sum_{1 \leq i \leq N} a_i \beta_{i,d} \ .\end{equation}
+\end{itemize}
+
 \begin{enumerate}
-\item \emph{Unregularized, logistic}. This model uses transformed target variables. Instead of predicting $\beta_{0,d}$ for $d \notin \Omega$, we predict the values
-\[ f(\beta) = \log \left(\beta^{-1} -1 \right)\]
-This is a nonlinear transformation, from the domain $[0,1]$ to $(-\infty,\infty)$. Steps (i) and (ii) are unchanged, though the inverse transformation is performed on the predicted values to return them to the domain $[0,1]$.
-\item \emph{LASSO}. This model includes another term in the optimization function. The usual linear regression (as was used above) seeks to minimize the sum of the squared errors. In LASSO, a penalty term is included 
-\item \emph{Ridge}.
-\end{enumerate}
-\item K mean
+\item \emph{Regularizers}. The usual linear regression seeks to minimize the sum of the squared errors (SSE). Alternative optimization functions can be chosen. We studied models that add a regularizer $\alpha \norm{x}_p^2$ to the SSE, where $\norm{\cdot}_p$ is the $L^p$ norm. The LASSO model uses the $L^1$ norm. The ridge model uses $L^2$. These regularizers give higher weights to more relevant features, whence the models are useful for feature selection.
 \end{enumerate}
 
-\subsection{Data processing}
-
-The data set was downloaded on [] from Bianca Dumitrescu's COS424 directory. 
-
-\subsection{Classification models}
+\item \emph{$K$ means regression}. This resembles a Class 1 model. $K$ groupings are identified among the vectors $B_d \equiv \left(\beta_{1,d},\dots,\beta_{N,d}\right)$ for $d\in\Omega$ using $K$ means clustering. We shall use the notation $B_{d,k}$ to refer to a vector $B_d$ being grouped into the $k$th cluster, and we will choose to assign $\beta_{0,d}$ also to that cluster, which we denote then by $\beta_{0,d,k}$. A linear regression is performed, using as features the centroids $C_k = \text{avg}\left\{B_{d,z} : d \in \Omega, z = k\right\}$ of the $K$ clusters to predict $B_{d}$ for $d \notin \Omega$. The resulting parameters $a_k$ are then used to predict $\beta_{0,d}$ by
+\[ \beta_{0,d} = \sum_{1 \leq k \leq K} a_k C_{0,k}\]
+where $C_{0,k} = \text{avg}\left\{\beta_{0,d,z} : d \in \Omega, z = k\right\}$ are the centroids of the $K$ clusters in the test data. This model significantly reduces the dimensionality of the feature space.
+\end{enumerate}
 
 \subsection{Evaluation}
+
+comment on ignoring NaN values in test
 
 (questions in problem writeup)
 \begin{itemize}
@@ -92,7 +114,16 @@ provide analysis code
 
 \subsection{Computational speed}
 
+Interpretation of error
+
+Difference in speed
+
+Interpretation of results
+
+Comparing two data sets
+
 \subsection{Generalization error}
+
 
 
 \section{Discussion}
