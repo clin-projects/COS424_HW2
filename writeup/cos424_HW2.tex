@@ -45,9 +45,11 @@ Just as our understanding of genetics develops with better statistics and more d
 
 \section{Data Description}
 
-The training data is a set of 3? whole genome bisulfite sequences, from Ziller et al 2013 ~\cite{ziller2013charting}. For each sequence $i$, we have the MLs $\beta_{i,d}$ at CpG sites, indexed by positions $d$, where $\beta \in [0,1]$ refers to the fraction of methylated reads from this sequence $i$ at $d$. Though both starting and ending positions for each site were provided, the difference between them was constant, so their information is redundant. By position, we refer to the starting position.
+The training data is a set of 3? whole genome bisulfite sequences, from Ziller et al ~\cite{ziller2013charting}. These are the reference sequences. The test data set is a partial assay, also from Ziller et al 2013 ~\cite{ziller2013charting}.
 
-The test data set is a partial assay, also from Ziller et al 2013 ~\cite{ziller2013charting}. The set of positions is the same for all reference sequences. Each reference sequence contains $N=?$ positions. The test sequence contains $M=?$ positions. We shall denote the test betas as $\beta_{0,d}$.
+For each sequence $i$, we have the MLs $\beta_{i,d}$ at CpG sites, indexed by positions $d$, where $\beta \in [0,1]$ refers to the fraction of methylated reads from this sequence $i$ at $d$. Though starting and ending positions for each site were provided, the difference between each pair is the same, so henceforth, by position we refer to the starting position. The ending position is redundant.
+
+The set of positions is the same for all reference sequences. Each reference sequence contains $N=?$ positions. The test sequence contains $M=?$ positions. We shall denote the test betas as $\beta_{0,d}$.
 
 In this report, we work only with the first chromosome.
 
@@ -56,7 +58,7 @@ In this report, we work only with the first chromosome.
 
 \subsection{Data processing}
 
-The data set was downloaded on March 20, 2015 from Bianca Dumitrescu's COS424 directory on Princeton's Nobel cluster. Both training and test sequences contain sites with unmeasured MLs, labeled "NaN".
+The data set was downloaded on March 20, 2015 from Bianca Dumitrescu's COS424 directory on Princeton's Nobel cluster. Both training and test sequences contain sites with unmeasured MLs, labeled ``NaN".
 
 The only general preprocessing done is imputing on the training set. In the training set, we have chosen to set a NaN value as the average of measured values at the same position, in the other reference sequences. 
 
