@@ -149,25 +149,17 @@ NMM & 00:00:08 & - & 0.50788960 \\ \hline
 \end{table}
 
 \subsection{Computational speed}
+The fastest model to predict was NMM, given that it does not have to do any fitting. Next fastest was SLR2, which performed only one fitting. All other models performed multiple iterations of linear regression, so were significantly slower. Of these, the $K$-means models were the fastest, as they reduce the dimensionality of the feature space in the clustering step. The remaining regression models were much slower than $K$-means, with LASSO regularized regression performing the slowest of all. The disparity in the times between the regularized models and SLR1 suggests that the scikit-learn package handles the calculations differently. Among the $K$-means models, one sees that the clustering time $t_C$ and the fitting and predicting time $t_F$ increases with the number of clusters, as expected: more clusters means more centroids and more features.
 
-The fastest model to predict was NMM, given that it does not have to do any fitting. Next fastest was SLR2, which performed only one fitting. All other models performed multiple iterations of linear regression, so were significantly slower. Of these, the $K$-means models were the fastest, as they reduce the dimensionality of the feature space in the clustering step. The remaining regression models were much slower than $K$-means, with LASSO regularized regression performing the slowest of all. Among the $K$-means models, one sees that the clustering time $t_C$ and the fitting and predicting time $t_F$ increases with the number of clusters, as expected: more clusters means more centroids and more features.
+\section{Discussion}
+\subsection{Model performance}
+With GLM, we expected that enforcing the constraint that predictions lie in $[0,1]$ would improve the results, but they were actually slightly worse than with SLR1. This suggests that the constraint is already handled well by SLR1.
 
+$K$-means models, with one exception, had comparable performance to SLR1, while being significantly faster. This supports using clustering vectors $B_d$ to reduce the feature space. The one exception was 32means, which performed markedly worse. We ran the $K$-means models multiple times, and continued to observe this performance anomaly in 32means. We do not yet have a good explanation for this.
 
-\subsection{Generalization error}
+For the regularized models, the regularization constant $\alpha$, after cross-validation, was extremely small, indicating that these models were unable to significantly reduce the feature space. In future work, other regularization methods can be attempted.
 
-
-Interpretation of error
-
-Interpretation of results
-
-
-(questions in problem writeup)
-\begin{itemize}
-\item what features were most important for prediction? what do features tell us about problem
-\item were some reference samples more predictive of the held out sample than others?
-\item what did distribution of prediction errors look like? approximately gaussian and zero centered, or heavy tail, or what?
-\end{itemize}
-
+\subsection{Comparing SLR1 to SLR2}
 
 include specific examples of CpG sites or features that highlight behavior of the models
 
