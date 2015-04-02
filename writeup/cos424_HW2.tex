@@ -52,38 +52,40 @@ Just as our understanding of genetics develops with better statistics and more d
 
 \section{Data Description}
 
-The training data is a set of $N = 3?$ whole genome bisulfite sequences, from Ziller et al ~\cite{ziller2013charting}. These are the reference sequences. The test data set is a partial assay, also from Ziller et al ~\cite{ziller2013charting}.
+The training data is a set of $N = 32$ whole genome bisulfite sequences, from Ziller et al ~\cite{ziller2013charting}. These are the reference sequences. We refer to them as \texttt{training}. The test data is a partial assay, also from Ziller et al ~\cite{ziller2013charting}. Two separate sets are included in the test data: one called \texttt{sample}, another called \texttt{test}; both refer to the exact same sequence, but the values are mostly unobserved in \texttt{sample}, while observed in \texttt{test}. Data for twenty chromosomes were provided; in this report, we work only with the first chromosome.
 
-For each sequence $i$, we have the MLs $\beta_{i,d}$ at CpG sites, with $d$ referring to the information about its positions, strand and whether it is present on a 450K chip, where $\beta \in [0,1]$ refers to the fraction of methylated reads from this sequence $i$ given $d$. Though starting and ending positions for each site were provided, the difference between each pair is the same, so henceforth, by position we refer to the starting position. The ending position is redundant.
+For each sequence $i$, we have the MLs $\left\{\beta_{i,d}\right\}$ at CpG sites, where $d$ is the starting position of a given site, and where $\beta \in [0,1]$ is the fraction of methylated reads at the site from this sequence $i$ with starting position $d$. Starting and ending positions for each site were provided, but the difference between each pair is the same; so henceforth, by position, we refer only to the start position. The end position is redundant. The positions are the same for all sequences in \texttt{training} and \texttt{sample}. We denote the \texttt{sample} MLs as $\beta_{0,d}$, and the \texttt{training} MLs as $\beta_{i,d}$ where $1 \leq i \leq N$. Each sequence contains 379,551 sites.
 
-The set of all information $d$ is the same for all sequences. We shall denote the test betas as $\beta_{0,d}$. Each sequence contains $?$ elements. 
+Other features are provided, e.g. strand. We do not fit to these features. We will mention in this report whenever they are implicitly incorporated in $d$.
 
-In this report, we work only with the first chromosome.
+Models are fit to \texttt{training}, to predict the \texttt{sample} values $\hat{\beta}_{0,d}$, which are then compared against the observed \texttt{test} values $\beta_{0,d}$ to estimate the models' prediction error, according to Eqn. (\ref{metric}).
+
+
 
 \section{Methods}
 
 \subsection{Data processing}
 
-The data set was downloaded on March 20, 2015 from Bianca Dumitrescu's COS424 directory on Princeton's Nobel cluster. Both training and test sequences contain sites with unmeasured MLs, labeled ``NaN".
+The data set was downloaded on March 20, 2015 from Bianca Dumitrescu's COS424 directory on Princeton's Nobel cluster. Both \texttt{training} and \texttt{sample} contain sites with unmeasured MLs, labeled ``NaN".
 
-The only general preprocessing done is imputing on the training set. In the training set, we have chosen to set a NaN value as the average of measured values with the same $d$, in the other reference sequences. 
+The only preprocessing is imputing on \texttt{training} to replace the NaN values. We have chosen to set a NaN value as the average of observed values with the same $d$, in the other reference sequences. 
 
-The test set contains some observed MLs. We denote the set of all the information characterizing them as $\Omega$. We frequently use these observed values in our models.
+A subset of the \texttt{sample} MLs has been observed. We denote this subset by $\Omega$.
 
 \subsection{Models}
 
-The models were applied using built-in functions of the scikit-learn Python library \cite{scikit-learn}. Default parametrizations were used, unless otherwise specified.
+The models were applied using built-in functions of the scikit-learn Python library \cite{scikit-learn}. Default parametrizations were used, unless otherwise specified. Below, we define each model, explain our motivation for them, and summarize their performance.
 
 \begin{enumerate}
-\item \emph{Naive mean model (NMM)}. The first model we implemented was a naive mean model. It performed reasonably well, according to our error metric \ref{}, and was simple and fast. It served as the benchmark for all of our subsequent models. This model predicts using the mean of the reference sequences
-\[ \beta_{0,d} = \underset{i}{\text{avg}} \left\{ \beta_{i,d}\right\}\]
-Such a model would be an optimal choice if for each given $d$, the only information available were $\beta_{i,d}$.
+\item \emph{Naive mean model (NMM)}. The first model we implemented was a naive mean model. It performed reasonably well, according to Eqn. (\ref{metric}), and was simple and fast. It initially served as the benchmark for all of our subsequent models. This model predicts using the mean of the reference sequences
+\[ \hat{\beta}_{0,d} = \underset{i}{\text{avg}} \left\{ \beta_{i,d}\right\}\]
+Such a model would be optimal if for each $d$, the only information available were $\beta_{i,d}$.
 
 \item \emph{Simple linear regression (SLR1)}. The next model was essentially a simple linear regression. For each site $d \notin \Omega$, a simple linear regression is performed, using features $\left\{ \beta_{i,x} \right\}_{x \in \Omega}$ to fit the value $\beta_{i,d}$. Because $i$ runs from $1$ to $N$, there are $N$ data points (for each $d \notin \Omega)$. The resulting parameters $\left\{ a_x\right\}_{x \in \Omega}$ are used to predict $\beta_{0,d}$ by
-\begin{equation} \label{beta.sites}\beta_{0,d} = \sum_{x \in \Omega} a_x \beta_{0,x} \ .\end{equation}
+\begin{equation} \label{beta.sites}\hat{\beta}_{0,d} = \sum_{x \in \Omega} a_x \beta_{0,x} \ .\end{equation}
 In general, for different $d'$, the parameters $\left\{a_x'\right\}$ will differ from $\left\{a_x\right\}$. The parameters $\left\{a_x\right\}$ for a given $d$ thus implicitly incorporates all of the information given by $d$.
 
-This model performed relatively well, compared to our benchmark, but it was significantly slower, given the number of linear regressions that need to be done. Another issue is that the predictions need not lie in the range $[0,1]$.
+On one hand, SLR1 performed significantly better than NMM, according to Eqn. (\ref{metric}), but on the other hand, it was significantly slower, given the number of linear regressions that need to be done. Another issue is that the predictions need not lie in the range $[0,1]$.
 
 \item \emph{Generalized linear model (GLM)}. To solve the issue of the prediction range, we then implemented a generalized linear model, using the logit link function $f(\beta): [0,1] \to (-\infty,\infty)$, which is of the form
 \[ f(\beta) = \ln(\beta^{-1} - 1) \ .\]
@@ -92,20 +94,18 @@ The computational time is roughly the same as the linear regression model, but p
 
 \item \emph{Regularized linear regression (RegLR)}. We then sought to reduce the dimensionality of the feature space, by introducing regularizers in the linear regression. We looked at both LASSO regression and ridge regression. The regularization constant $\alpha$ was determined through cross validation.
 
-Ridge regression was three times faster than simple linear regression; LASSO was three times slower---in fact, LASSO was the slowest of all models we considered in our study. Their performance was comparable to simple linear regression.
+Ridge regression was three times faster than simple linear regression; LASSO was three times slower---in fact, LASSO was the slowest of all models we considered in our study. The performance of both was comparable to simple linear regression.
 
-\item \emph{$K$-means clustering ($K$means)}. To significantly reduce the computational time, we then implemented a model based on $K$-means clustering. This model can be considered an approximation to our simple linear regression.
+\item \emph{$K$-means clustering ($K$means)}. To significantly reduce the computational time, we then implemented a model based on $K$-means clustering. This model can be considered as an approximation to our simple linear regression.
 
-$B_{d,k}$ refers to a vector $ \left(\beta_{1,d},\dots,\beta_{N,d}\right)$ that has been classified into the $k$th cluster using $K$-means clustering. We assign the same classification to the test site, which we denote by $\beta_{0,d,k}$
+For $d \in \Omega$, $B_{d,k}$ refers to a vector $ \left(\beta_{1,d},\dots,\beta_{N,d}\right)$ that has been classified into the $k$th cluster using $K$-means clustering. We assign the same classification to the corresponding site in $\texttt{sample}$, which we denote by $\beta_{0,d,k}$. A simple linear regression is performed, using as features the centroids $C_k = \text{avg}\left\{B_{d,z} : d \in \Omega, z = k\right\}$ of the $K$ clusters to predict $B_{d}$ for $d \notin \Omega$. The resulting parameters $a_k$ are then used to predict $\beta_{0,d}$ by
+\[ \hat{\beta}_{0,d} = \sum_{1 \leq k \leq K} a_k C_{0,k}\]
+where $C_{0,k} = \text{avg}\left\{\beta_{0,d,z} : d \in \Omega, z = k\right\}$ are the centroids of the $K$ clusters in \texttt{sample}.
 
-A simple linear regression is performed, using as features the centroids $C_k = \text{avg}\left\{B_{d,z} : d \in \Omega, z = k\right\}$ of the $K$ clusters to predict $B_{d}$ for $d \notin \Omega$. The resulting parameters $a_k$ are then used to predict $\beta_{0,d}$ by
-\[ \beta_{0,d} = \sum_{1 \leq k \leq K} a_k C_{0,k}\]
-where $C_{0,k} = \text{avg}\left\{\beta_{0,d,z} : d \in \Omega, z = k\right\}$ are the centroids of the $K$ clusters in the test data.
-
-This model significantly reduces the dimensionality of the feature space when $k$ is small. We looked at $K = 2^n$ for $3 \leq n \leq 9$. Compared to simple linear regression, the model performed relatively well, which is reasonable, given that it is an approximation of it.
+This model significantly reduces the dimensionality of the feature space when $K$ is small. We looked at $K = 2^n$ for $3 \leq n \leq 9$. Each was significantly faster than the other regression models, and with only one exception, they performed relatively well.
 
 \item \emph{Simple linear regression 2 (SLR2)}. We then performed another simple linear regression model, looking at the data from a different perspective, using as features $\left\{ \beta_{i,d} \right\}_{1\leq i \leq N}$ to fit the value $\beta_{0,d}$. Because every position $d \in \Omega$ provides one data point, the total number of data points is the size of $\Omega$. The resulting parameters $\left\{ a_{i}\right\}_{1\leq i \leq N}$ are used to predict $\beta_{0,d}$ by
-\begin{equation} \label{beta.samples} \beta_{0,d} = \sum_{1 \leq i \leq N} a_i \beta_{i,d} \ .\end{equation}
+\begin{equation} \label{beta.samples} \hat{\beta}_{0,d} = \sum_{1 \leq i \leq N} a_i \beta_{i,d} \ .\end{equation}
 
 This model was fast, and was the best performing amongst the models we looked at.
 
@@ -113,25 +113,13 @@ This model was fast, and was the best performing amongst the models we looked at
 
 \subsection{Evaluation}
 
-The metric we used to evaluate the models is 
-
+The metric used to evaluate the predictions $\left\{ \hat{\beta}_{0,d}\right\}$ for a given model is 
 \begin{equation} \label{metric}
 \epsilon^2 = \frac{ 1}{|\Gamma| S^{2}} \sum_{d \in \Gamma} \left( \hat{\beta}_{0,d} -  \beta_{0,d}\right)^2 
 \end{equation}
-where $\Gamma$ are all observed sites (i.e. not NaN) in \texttt{test}, that are not observed in \texttt{sample}, $\hat{\beta}$ are the known values, and $S^2$ is the variance of $\left\{\beta_{0,d}\right\}_{d \in \Gamma}$. This metric is non-negative, and smaller values correspond to better predictions.
+where $\Gamma$ is the set of sites with observed values (i.e. not NaN) in \texttt{test} that are not observed in \texttt{sample}. The $\left\{\beta_{0,d}\right\}$ are the known values in \texttt{test}. $S^2$ is the variance of $\left\{\beta_{0,d}\right\}_{d \in \Gamma}$. This metric is non-negative, and smaller values correspond to better predictions.
 
-If $\hat{\beta}$ were fitted by a linear regression on $\beta$, then $\epsilon = 1 - R^2$, where $R^2$ is the coefficient of determination. Alternatively, it can be interpreted as how good the prediction is, relative to just predicting with just a single number, the sample mean; this can be seen from the definition of $S^2$, and observing that without the $S^2$, the right hand side is simply the average error squared.
-
-(questions in problem writeup)
-\begin{itemize}
-\item what features were most important for prediction? what do features tell us about problem
-\item were some reference samples more predictive of the held out sample than others?
-\item what did distribution of prediction errors look like? approximately gaussian and zero centered, or heavy tail, or what?
-\end{itemize}
-
-include specific examples of CpG sites or features that highlight behavior of the models
-
-provide analysis code
+If $\hat{\beta}$ were fitted by a linear regression on $\beta$, then $\epsilon^2 = 1 - R^2$, where $R^2$ is the coefficient of determination. Alternatively, it can be interpreted as how good the prediction is, relative to just predicting with one number, the sample mean; this can be seen from the definition of $S^2$, and observing that without the $S^2$, the right hand side is simply the average error squared.
 
 \section{Results}
 
@@ -160,9 +148,9 @@ NMM & 00:00:08 & - & 0.50788960 \\ \hline
    \label{tab:models}
 \end{table}
 
-
-
 \subsection{Computational speed}
+
+The fastest model to predict was NMM, given that it does not have to do any fitting. Next fastest was SLR2, which performed only one fitting. All other models performed multiple iterations of linear regression, so were significantly slower. Of these, the $K$-means models were the fastest, as they reduce the dimensionality of the feature space in the clustering step. The remaining regression models were much slower than $K$-means, with Lasso regularized regression performing the slowest of all. Among the $K$-means models, one sees that the clustering time $t_C$ and the fitting and predicting time $t_F$ increases with the number of clusters, as expected: more clusters means more centroids and more features.
 
 Interpretation of error
 
@@ -176,7 +164,17 @@ Comparing two data sets
 
 
 
+(questions in problem writeup)
+\begin{itemize}
+\item what features were most important for prediction? what do features tell us about problem
+\item were some reference samples more predictive of the held out sample than others?
+\item what did distribution of prediction errors look like? approximately gaussian and zero centered, or heavy tail, or what?
+\end{itemize}
 
+
+include specific examples of CpG sites or features that highlight behavior of the models
+
+provide analysis code
 
 
 \section{Discussion}
