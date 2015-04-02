@@ -150,18 +150,15 @@ NMM & 00:00:08 & - & 0.50788960 \\ \hline
 
 \subsection{Computational speed}
 
-The fastest model to predict was NMM, given that it does not have to do any fitting. Next fastest was SLR2, which performed only one fitting. All other models performed multiple iterations of linear regression, so were significantly slower. Of these, the $K$-means models were the fastest, as they reduce the dimensionality of the feature space in the clustering step. The remaining regression models were much slower than $K$-means, with Lasso regularized regression performing the slowest of all. Among the $K$-means models, one sees that the clustering time $t_C$ and the fitting and predicting time $t_F$ increases with the number of clusters, as expected: more clusters means more centroids and more features.
+The fastest model to predict was NMM, given that it does not have to do any fitting. Next fastest was SLR2, which performed only one fitting. All other models performed multiple iterations of linear regression, so were significantly slower. Of these, the $K$-means models were the fastest, as they reduce the dimensionality of the feature space in the clustering step. The remaining regression models were much slower than $K$-means, with LASSO regularized regression performing the slowest of all. Among the $K$-means models, one sees that the clustering time $t_C$ and the fitting and predicting time $t_F$ increases with the number of clusters, as expected: more clusters means more centroids and more features.
 
-Interpretation of error
-
-Difference in speed
-
-Interpretation of results
-
-Comparing two data sets
 
 \subsection{Generalization error}
 
+
+Interpretation of error
+
+Interpretation of results
 
 
 (questions in problem writeup)
