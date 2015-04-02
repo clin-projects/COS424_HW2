@@ -47,7 +47,7 @@ Just as our understanding of genetics develops with better statistics and more d
 
 The training data is a set of $N = 3?$ whole genome bisulfite sequences, from Ziller et al ~\cite{ziller2013charting}. These are the reference sequences. The test data set is a partial assay, also from Ziller et al ~\cite{ziller2013charting}.
 
-For each sequence $i$, we have the MLs $\beta_{i,d}$ at CpG sites, indexed by positions $d$, where $\beta \in [0,1]$ refers to the fraction of methylated reads from this sequence $i$ at $d$. Though starting and ending positions for each site were provided, the difference between each pair is the same, so henceforth, by position we refer to the starting position. The ending position is redundant.
+For each sequence $i$, we have the MLs $\beta_{i,d}$ at CpG sites, with $d$ referring to the information about its positions, strand and whether it is present on 450K chip, where $\beta \in [0,1]$ refers to the fraction of methylated reads from this sequence $i$ given $d$. Though starting and ending positions for each site were provided, the difference between each pair is the same, so henceforth, by position we refer to the starting position. The ending position is redundant.
 
 The set of positions is the same for all sequences. Each sequence contains $?$ positions. We shall denote the test betas as $\beta_{0,d}$.
 
@@ -62,7 +62,7 @@ The data set was downloaded on March 20, 2015 from Bianca Dumitrescu's COS424 di
 
 The only general preprocessing done is imputing on the training set. In the training set, we have chosen to set a NaN value as the average of measured values at the same position, in the other reference sequences. 
 
-The test set contains some observed MLs. We denote the set of their positions as $\Omega$. We frequently use these observed values in our models.
+The test set contains some observed MLs. We denote the set of all the information characterizing them as $\Omega$. We frequently use these observed values in our models.
 
 The only specific preprocessing done is in one model, where we study a nonlinear transformation of the response variables. This transformation $f(\beta): [0,1] \to (-\infty,\infty)$ is of the form
 \[ f(\beta) = \ln(\beta^{-1} - 1) \ .\]
@@ -76,15 +76,15 @@ The models were applied using built-in functions of the scikit-learn Python libr
 
 \item \emph{Naive mean model}. This model predicts using the mean of the reference sequences
 \[ \beta_{0,d} = \underset{i}{\text{avg}} \left\{ \beta_{i,d}\right\}\]
-Such a model would work well if for each position $d$, the only information available were $\beta_{i,d}$.
+Such a model would be an optimal choice if for each given $d$, the only information available were $\beta_{i,d}$.
 \item \emph{Linear regression models}. Most of our models are essentially linear regression. We have studied a generalized linear model, as well as regularized models.
 
 The models fall into two classes, which we refer to as Class 1 and Class 2. They differ in their choice of features. They are very different in spirit, with seemingly opposing assumptions and interpretation, but their results are qualitatively identical. We devote the bulk of our discussion in this report to unraveling the implications on the data.
 
 \begin{itemize}
-\item [Class 1.] For each position $d \notin \Omega$, a linear regression is performed, using as features $\left\{ \beta_{i,x} \right\}_{x \in \Omega}$ to fit the value $\beta_{i,d}$. Because $i$ runs from $1$ to $N$, there are $N$ data points (for each $d \notin \Omega)$. The resulting parameters $\left\{ a_x\right\}_{x \in \Omega}$ are used to predict $\beta_{0,d}$ by
+\item [Class 1.] For each given information $d \notin \Omega$, a linear regression is performed, using features $\left\{ \beta_{i,x} \right\}_{x \in \Omega}$ to fit the value $\beta_{i,d}$. Because $i$ runs from $1$ to $N$, there are $N$ data points (for each $d \notin \Omega)$. The resulting parameters $\left\{ a_x\right\}_{x \in \Omega}$ are used to predict $\beta_{0,d}$ by
 \begin{equation} \label{beta.sites}\beta_{0,d} = \sum_{x \in \Omega} a_x \beta_{0,x} \ .\end{equation}
-In general, for a different position $d'$, the parameters $a_x'$ will differ from $a_x$. This parameter implicitly incorporates other variables specific to this particular position of data, e.g., strand
+In general, for different $d'$, the parameters $a_x'$ will differ from $a_x$. The parameters $\left{a_x\right}$ for given $d$ thus implicitly incorporates the information given by $d$.
 
 \begin{itemize}
 \item \emph{Regularizers}. The usual linear regression seeks to minimize the sum of the squared errors (SSE). Alternative optimization functions can be chosen. We studied models that add a regularizer $\alpha \norm{x}_p^2$ to the SSE, where $\norm{\cdot}_p$ is the $L^p$ norm. The LASSO model uses the $L^1$ norm. The ridge model uses $L^2$. These regularizers give higher weights to more relevant features, whence the models are useful for feature selection.
